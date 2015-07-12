@@ -1,0 +1,18 @@
+doctype html
+html(ng-app="MyApp")
+    head
+        title(ng-value="'MyApp - ' + $state.title")
+        link(rel='stylesheet', href='/plugins/bootstrap/dist/css/bootstrap.css')
+    body
+        ui-view
+
+// Lib
+script(src='/plugins/jquery/dist/jquery.js')
+script(src='/plugins/bootstrap/dist/js/bootstrap.js')
+
+// Angular
+script(src='/plugins/angular/angular.js')
+script(src='/plugins/angular-ui-router/release/angular-ui-router.js')
+
+// Application
+script(src='/js/app.js')
