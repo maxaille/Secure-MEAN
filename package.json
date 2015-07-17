@@ -1,6 +1,6 @@
 {
   "name": "Secure-MEAN",
-  "description": "Seed for onepage MEAN app using HTTPS and JWT for secured sessions ",
+  "description": "Seed for onepage MEAN app using HTTPS and JWT for secured sessions",
   "version": "0.1.0",
   "scripts": {
     "start": "coffee ./bin/www.coffee"
@@ -21,7 +21,6 @@
     "grunt-contrib-watch": "^0.6.1",
     "jade": "~1.11.0",
     "jwt-simple": "^0.3.0",
-    "method-override": "^2.3.3",
     "mongoose": "^4.0.6",
     "morgan": "~1.6.1",
     "passport-local": "^1.0.0",
@@ -29,5 +28,10 @@
     "serve-favicon": "~2.3.0"
   },
   "repository": "git://github.com/maxaille/Secure-MEAN",
-  "main": "bin/www.coffee"
+  "main": "bin/www.coffee",
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "should": "^7.0.2",
+    "supertest": "^1.0.1"
+  }
 }

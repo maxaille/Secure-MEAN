@@ -1,11 +1,10 @@
+fs = require 'fs'
 console = require 'better-console'
 express = require 'express'
 path = require 'path'
 favicon = require 'serve-favicon'
 logger = require 'morgan'
-cookieParser = require 'cookie-parser'
 bodyParser = require 'body-parser'
-methodOverride = require 'method-override'
 jwt = require 'jwt-simple'
 
 conf = require './config'
@@ -14,35 +13,38 @@ app = express()
 
 # *********** DB ***********
 mongoose = require 'mongoose'
-mongoose.connect 'mongodb://localhost/myApp'
+mgCf =
+    user: process.env.MONGO_USER || conf.mongoUser || ''
+    password: process.env.MONGO_PASSWORD || conf.mongoPassword || ''
+    url: process.env.MONGO_URL || conf.mongoUrl || 'localhost'
+    port: process.env.MONGO_PORT || conf.mongoPort || '27017'
+    database: process.env.MONGO_DATABASE || conf.mongoDatabase || 'Secure-MEAN'
+mongoose.connect "mongodb://#{mgCf.user}#{if !!mgCf.password and !!mgCf.user then ':' + mgCf.password else ''}#{if !!mgCf.user then '@' else ''}#{mgCf.url}#{if !!mgCf.port then ':' + mgCf.port else ''}/#{mgCf.database}"
 mongoose.connection.once 'open', ->
     console.info 'DB Connected'
 
-
 # ******* CONFIGURATION *******
-app.set 'view engine', 'jade'
+app.set 'view engine', 'jade' # Used for errors display, not very useful
 
-app.use methodOverride 'X-HTTP-Method-Override'
-app.use (req, res, next) ->
-    res.header 'Access-Control-Allow-Origin', '*'
-    res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
-    res.header 'Access-Control-Allow-Headers', 'Content-Type'
-    next()
-app.use logger 'dev'
+logger.token 'encrypted', (req, res) ->
+    if req.connection.encrypted then ' HTTPS ' else ' '
+app.use logger ':method:encrypted:url :status :response-time ms :res[content-length]'
 app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: false
-app.use cookieParser()
-app.use require('express-session')
-    secret: 'lama is love lama is life'
-    cookie: maxAge: 600000
+
+# **** Predefined Errors ****
+# Set some predefined error responses in req
+app.use require './utils/errors'
 
 # ********** CORS ************
+# Enable request from another domain (HTTPS from HTTP for example)
 app.use (req, res, next) ->
     res.header 'Access-Control-Allow-Origin', '*'
     res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
     res.header 'Access-Control-Allow-Headers', 'Content-Type,Authorization'
 
     next()
+
 app.options "*", (req, res) ->
     res.status(200).send()
 
@@ -53,22 +55,58 @@ app.use express.static path.join(__dirname, 'public/build')
 app = require('./utils/authentication')(app)
 
 # ******* JWT MIDDLEWARE *******
-app.get '/api/*', (req, res, next) ->
-    #handle jwt
-    token = (req.body && req.body.access_token) or
-        (req.query && req.query.access_token) or
-        req.headers['access-token'] or (req.headers['authorization'] && req.headers['authorization'].split('Bearer ')[1])
-    if !token or token and jwt.decode(token, conf.tokenSecret).exp * 1000 < Date.now() then return res.status(401).send()
+User = require './models/User'
+app.use (req, res, next) ->
+    # Check for token in the request
+    token = (req.headers['authorization'] && req.headers['authorization'].split('Bearer ')[1]) or # Used in this application
+            (req.body && req.body.access_token) or
+            (req.query && req.query.access_token) or
+            req.headers['access-token']
+    if token
+        req.user = jwt.decode token, conf.tokenSecret
+        req.user.isValid = (cb) ->
+            if req.user.exp * 1000 >= Date.now()
+                User.findOne id: req.user.id, (err, user) ->
+                    if err then cb err
+                    else cb null
+            else
+                cb expired: true
     next()
 
+app.checkJWT = (req, res, next) ->
+    if req.user
+        req.user.isValid (err) -> if err then res.status(401).send() else next()
+    else
+        res.status(401).send()
+
 # ******** REST *********
-controllers = require './controllers'
-for controller in controllers
-    for route, fns of controller
+# Load all routes in /controllers
+# and check if require authentication with JWT
+dir = './controllers'
+controllers = []
+
+walk = (dir) ->
+    list = fs.readdirSync dir
+    list.forEach (file) ->
+        file = dir + '/' + file
+        stat = fs.statSync file
+        if stat && stat.isDirectory()
+            walk file
+        else
+            controllers.push file
+walk dir
+
+for file in controllers
+    controller = require file
+    for route, list of controller
         route = app.route '/api' + route
-        for obj in fns
-            # todo: is auth
-            route[obj.type] obj.fn
+        for fn in list
+            if fn.type
+                if fn.requireAuth then route[fn.type] app.checkJWT, fn.fn
+                else route[fn.type] fn.fn
+            else
+                route[Object.keys(fn)[0]] fn[Object.keys(fn)[0]]
+
 
 
 # ******* ERRORS ********

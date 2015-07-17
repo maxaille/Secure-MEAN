@@ -19,6 +19,14 @@ App.config [
             controller: 'loginCtrl'
             title: 'login'
             templateUrl: '/partials/login.html'
+            params: user: null
+
+
+        .state 'register',
+            url: '/register'
+            controller: 'registerCtrl'
+            title: 'register'
+            templateUrl: '/partials/register.html'
 ]
 
 App.factory 'authInterceptor', [
@@ -70,13 +78,41 @@ App.controller 'loginCtrl', [
     '$rootScope'
     '$scope'
     '$http'
-    ($rootScope, $scope, $http) ->
+    '$stateParams'
+    ($rootScope, $scope, $http, $stateParams) ->
+        sendLogin = (user) ->
+            return $http.post API + '/login', user
+            .success (data) ->
+                $rootScope.user = data
+
         $scope.validate = (form) ->
             # Use 'form' for checking fields
             # todo: hash password
-            $http.post API + '/login', {username: $scope.username, password: $scope.password}
+            sendLogin username: $scope.username, password: $scope.password
             .success (data) ->
-                $rootScope.user = data
+                console.log data
+            .error (data) ->
+                console.log data
+
+        if $stateParams.user
+            sendLogin $stateParams.user
+            .success ->
+                console.log 'ok'
+            .error ->
+                console.log 'nok'
+]
+
+App.controller 'registerCtrl', [
+    '$rootScope'
+    '$scope'
+    '$http'
+    '$state'
+    ($rootScope, $scope, $http, $state) ->
+        $scope.validate = ->
+            if $scope.password != $scope.passwordRepeat then return
+            $http.post API + '/register', {username: $scope.username, password: $scope.password}
+            .success (data) ->
+                $state.go 'login', user: username: $scope.username, password: $scope.password
                 console.log data
             .error (data) ->
                 console.log data
@@ -90,6 +126,12 @@ App.run [
     ($rootScope, $state, $http, auth) ->
         $rootScope.title = $state.current.title
         $rootScope.$http = $http
+
+        $http.get API + '/secure'
+        .success (data) ->
+            $rootScope.https_api = data
+        .error (data) ->
+            console.log data
 
         if auth.getToken()
             console.log auth.parseJwt auth.getToken()

@@ -1,8 +1,10 @@
 fs = require 'fs'
-app = require '../app'
+app = require './app'
 console = require 'better-console'
 http = require 'http'
 https = require 'https'
+
+conf = require './config'
 
 normalizePort = (val) ->
     port = parseInt val, 10
@@ -30,11 +32,12 @@ onError = (error) ->
         else
             throw error
 
-port = normalizePort process.env.PORT || '3000'
-HTTPS_port = normalizePort process.env.HTTPS_PORT || '3001'
+port = normalizePort process.env.PORT || conf.port || 3000
+HTTPS_port = normalizePort process.env.HTTPS_PORT || conf.HTTPS_port || 3001
 app.set 'port', port
 app.set 'HTTPS_port', HTTPS_port
 
+# Set certificates for HTTPS
 options =
     key: fs.readFileSync './certs/server.key'
     cert: fs.readFileSync './certs/server.crt'
@@ -49,7 +52,7 @@ server.on 'error', onError
 HTTPS_server.on 'error', onError
 
 server.on 'listening',  ->
-    addr = HTTPS_server.address()
+    addr = server.address()
     bind = if typeof addr == 'string' then 'pipe ' + addr else 'port ' + addr.port
     console.info 'HTTP server listening on ' + bind
 HTTPS_server.on 'listening', ->

@@ -1,4 +1,5 @@
 jwt = require 'jwt-simple'
+mongoose = require 'mongoose'
 
 User = require '../models/User'
 config = require '../config'
@@ -16,14 +17,30 @@ formatUser = (user) ->
         username: user.username
     return result
 
+validateUser = (user) ->
+    invalidFields = []
+    if !user.username or user.username.length < 3 then invalidFields.push 'username'
+    if !user.password or user.password.length < 3 then invalidFields.push 'password'
+
+    if invalidFields.length > 0 then return invalidFields
+    else return true
+
 module.exports = (app) ->
+    app.use (req, res, next) ->
+        req.formatUser = formatUser
+        req.validateUser = validateUser
+        next()
     # Handle authentication
     app.post '/login', (req, res) ->
-        return res.status(400).json err: 'invalid parameters' unless req.body.username and req.body.password
-        User.findOne username:req.body.username, (err, user) ->
-            if err then return res.status(401).json err: 'invalid credentials'
+        result = validateUser req.body
+        if result != true then return req.badFormatError result
+
+        User.findOne username: req.body.username, (err, user) ->
+            if err then return req.internalError msg: 'Database error'
+            if !user then return req.invalidCredentials()
+
             user.verifyPassword req.body.password, (err, isMatch) ->
-                if err then return req.internalError(msg: 'Failed to check password')
+                if err then return req.internalError msg: 'Failed to check password'
                 if isMatch
                     token = generateToken user
                     result =
@@ -32,12 +49,19 @@ module.exports = (app) ->
                         exp: Math.floor (Date.now() + config.tokenExpirationDelay)/1000
                     res.json result
                 else
-                    res.status(401).json err: 'invalid credentials'
+                    req.invalidCredentials()
 
 
     app.post '/register', (req, res) ->
+        result = validateUser req.body
+        if result != true then return req.badFormatError result
+
         User.create username: req.body.username, password: req.body.password, (err, user) ->
-            if err then return res.status(400).send()
+            if err then return req.internalError msg: 'Database error'
             res.send formatUser user
+
+    app.get '/secure', (req, res) ->
+        console.log req.url
+        res.send 'https://'
 
     return app

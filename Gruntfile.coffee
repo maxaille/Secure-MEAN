@@ -7,10 +7,12 @@ module.exports = (grunt) ->
     grunt.initConfig
         coffee:
             compile:
-                options:
-                    join: true
-                files:
-                    'public/build/js/app.js': ['public/coffee/app.coffee']
+                cwd: 'public/coffee'
+                src: ['**/*.coffee']
+                dest: 'public/build/js'
+                expand: true
+                flatten: true
+                ext: '.js'
         sass:
             compile:
                 options:
@@ -36,7 +38,7 @@ module.exports = (grunt) ->
                 ]
         watch:
             coffee:
-                files: ['public/**/*.coffee']
+                files: ['public/coffee/**/*.coffee']
                 tasks: ['coffee']
             jade:
                 files: ['public/jade/**/*.jade']
