@@ -1,5 +1,6 @@
 @App = angular.module 'MyApp', ['ui.router']
 API = location.origin
+HTTPS_API = location.origin # replaced with the good https url in the angular.run
 
 App.config [
     '$stateProvider'
@@ -34,11 +35,12 @@ App.factory 'authInterceptor', [
     (auth) ->
         request: (config) ->
             token = auth.getToken()
-            if config.url.indexOf('/') != 0 and new URL(config.url).pathname.indexOf(new URL(API).pathname) == 0 and token
+            # Request to an API subroute, add token in headers
+            if config.url.indexOf(HTTPS_API) == 0 and new URL(config.url).pathname.indexOf(new URL(API).pathname) == 0 and token
                 config.headers.Authorization = 'Bearer ' + token
             return config;
         response: (res) ->
-            if res.config.url.indexOf(API) == 0 and typeof res.data.token != 'undefined'
+            if res.config.url.indexOf(HTTPS_API) == 0 and typeof res.data.token != 'undefined'
                 auth.saveToken res.data.token
             return res
 ]
@@ -51,21 +53,27 @@ App.config [
 
 App.service 'auth', [
     '$window'
-    ($window) ->
-        parseJwt: (token) =>
-            base64Url = token.split('.')[1];
-            base64 = base64Url.replace('-', '+').replace '_', '/'
-            return JSON.parse $window.atob base64
-        saveToken: (token) =>
-            $window.localStorage['jwtToken'] = token
-        getToken: =>
-            return $window.localStorage['jwtToken']
-        isAuthed: =>
-            token = this.getToken()
-            if token
-                params = this.parseJwt token
-                return Math.round(new Date().getTime() / 1000) <= params.exp
-            else return false
+    '$rootScope'
+    ($window, $rootScope) ->
+        auth =
+            parseJwt: (token) =>
+                base64Url = token.split('.')[1];
+                base64 = base64Url.replace('-', '+').replace '_', '/'
+                return JSON.parse $window.atob base64
+            saveToken: (token) =>
+                $window.localStorage['jwtToken'] = token
+                exp = auth.parseJwt(token).exp * 1000
+                $rootScope.timerExpiration = setTimeout ->
+                    $rootScope.$broadcast 'user:expired'
+                , exp - Date.now()
+            getToken: =>
+                return $window.localStorage['jwtToken']
+            isAuthed: =>
+                token = auth.getToken()
+                if token
+                    params = auth.parseJwt token
+                    return Math.round(new Date().getTime() / 1000) <= params.exp
+                else return false
 ]
 
 App.controller 'startCtrl', [
@@ -78,10 +86,11 @@ App.controller 'loginCtrl', [
     '$rootScope'
     '$scope'
     '$http'
+    '$state'
     '$stateParams'
-    ($rootScope, $scope, $http, $stateParams) ->
+    ($rootScope, $scope, $http, $state, $stateParams) ->
         sendLogin = (user) ->
-            return $http.post API + '/login', user
+            return $http.post HTTPS_API + '/login', user
             .success (data) ->
                 $rootScope.user = data
 
@@ -90,14 +99,14 @@ App.controller 'loginCtrl', [
             # todo: hash password
             sendLogin username: $scope.username, password: $scope.password
             .success (data) ->
-                console.log data
+                $state.go 'start'
             .error (data) ->
                 console.log data
 
         if $stateParams.user
             sendLogin $stateParams.user
             .success ->
-                console.log 'ok'
+                $state.go 'start'
             .error ->
                 console.log 'nok'
 ]
@@ -110,7 +119,7 @@ App.controller 'registerCtrl', [
     ($rootScope, $scope, $http, $state) ->
         $scope.validate = ->
             if $scope.password != $scope.passwordRepeat then return
-            $http.post API + '/register', {username: $scope.username, password: $scope.password}
+            $http.post API + '/api/users', {username: $scope.username, password: $scope.password}
             .success (data) ->
                 $state.go 'login', user: username: $scope.username, password: $scope.password
                 console.log data
@@ -123,17 +132,27 @@ App.run [
     '$state'
     '$http'
     'auth'
-    ($rootScope, $state, $http, auth) ->
+    '$window'
+    ($rootScope, $state, $http, auth, $window) ->
         $rootScope.title = $state.current.title
         $rootScope.$http = $http
+        $rootScope.$window = $window
+        $rootScope.$state = $state
+        $rootScope.auth = auth
 
-        $http.get API + '/secure'
+        $http.get '/secure'
         .success (data) ->
-            $rootScope.https_api = data
+            port = data.port
+            HTTPS_API = 'https://' + location.hostname + if port == 443 then '' else ':' + port
         .error (data) ->
-            console.log data
+            throw data
 
-        if auth.getToken()
-            console.log auth.parseJwt auth.getToken()
+        if token = auth.getToken()
+            exp = auth.parseJwt(token).exp * 1000
+            $rootScope.timerExpiration = setTimeout ->
+                $rootScope.$broadcast 'user:expired'
+            , exp - Date.now()
 
+        $rootScope.$on 'user:expired', ->
+            console.log 'expired'
 ]

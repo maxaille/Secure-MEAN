@@ -43,10 +43,9 @@ app.use (req, res, next) ->
     res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
     res.header 'Access-Control-Allow-Headers', 'Content-Type,Authorization'
 
-    next()
+    if req.method == 'OPTIONS' then return res.status(200).send()
 
-app.options "*", (req, res) ->
-    res.status(200).send()
+    next()
 
 # ********** STATIC  **********
 app.use express.static path.join(__dirname, 'public/build')

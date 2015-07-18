@@ -51,17 +51,6 @@ module.exports = (app) ->
                 else
                     req.invalidCredentials()
 
-
-    app.post '/register', (req, res) ->
-        result = validateUser req.body
-        if result != true then return req.badFormatError result
-
-        User.create username: req.body.username, password: req.body.password, (err, user) ->
-            if err then return req.internalError msg: 'Database error'
-            res.send formatUser user
-
     app.get '/secure', (req, res) ->
-        console.log req.url
-        res.send 'https://'
-
+        res.json port: process.env.HTTPS_PORT || config.HTTPS_port || 3001
     return app

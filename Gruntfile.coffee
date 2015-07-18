@@ -19,15 +19,15 @@ module.exports = (grunt) ->
                     style: 'compressed'
                 files: [
                     cwd: 'public/sass'
-                    src: ['**/*.sass', '**/*.scss']
+                    src: ['**/*.sass']
                     dest: 'public/build/css'
-                    expand: false
+                    expand: true
                     ext: '.min.css'
                 ]
         jade:
             compile:
                 options:
-                    client: false,
+                    client: false
                     pretty: false
                 files: [
                     cwd: 'public/jade'
@@ -46,3 +46,5 @@ module.exports = (grunt) ->
             sass:
                 files: ['public/sass/**/*.sass']
                 tasks: ['sass']
+
+    grunt.registerTask 'default', ['jade', 'sass', 'coffee']

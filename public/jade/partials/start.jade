@@ -1,3 +1,4 @@
-div Start page
-a(ui-sref='login({lel:"lel"})') Go to login
-a(ui-sref='register') Go to register
+.col-xs-12
+    div Start page
+div(ng-if="auth.isAuthed()")
+    | LAMA POWA
