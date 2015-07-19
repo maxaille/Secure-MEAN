@@ -50,7 +50,4 @@ module.exports = (app) ->
                     res.json result
                 else
                     req.invalidCredentials()
-
-    app.get '/secure', (req, res) ->
-        res.json port: process.env.HTTPS_PORT || config.HTTPS_port || 3001
     return app

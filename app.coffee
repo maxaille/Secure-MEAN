@@ -1,6 +1,7 @@
 fs = require 'fs'
 console = require 'better-console'
 express = require 'express'
+require 'express-template-cache' # Use cache for generating the index only once
 path = require 'path'
 favicon = require 'serve-favicon'
 logger = require 'morgan'
@@ -24,7 +25,7 @@ mongoose.connection.once 'open', ->
     console.info 'DB Connected'
 
 # ******* CONFIGURATION *******
-app.set 'view engine', 'jade' # Used for errors display, not very useful
+app.set 'view engine', 'jade' # Used for errors display and generating the index (setting HTTPS port for HTTPS request to the API)
 
 logger.token 'encrypted', (req, res) ->
     if req.connection.encrypted then ' HTTPS ' else ' '
@@ -49,6 +50,11 @@ app.use (req, res, next) ->
 
 # ********** STATIC  **********
 app.use express.static path.join(__dirname, 'public/build')
+app.get '/', (req, res) ->
+    res.renderStatic 'index',
+        HTTPS_ONLY: conf.httpsOnly
+        HTTPS_PORT: app.get 'HTTPS_port'
+        APP_NAME: conf.appName
 
 # ******* AUTHENTICATION *******
 app = require('./utils/authentication')(app)

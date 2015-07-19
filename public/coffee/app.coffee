@@ -1,6 +1,8 @@
-@App = angular.module 'MyApp', ['ui.router']
+@App = angular.module window.APP_NAME, ['ui.router']
 API = location.origin
-HTTPS_API = location.origin # replaced with the good https url in the angular.run
+if !window.HTTPS_API
+    HTTPS_API = 'https://' + location.hostname + if window.HTTPS_PORT == 443 then '' else ':' + HTTPS_PORT
+else HTTPS_API = window.HTTPS_API
 
 App.config [
     '$stateProvider'
@@ -156,13 +158,14 @@ App.run [
 
         $rootScope.user = null
 
-        # Get the HTTPS url for secured request
-        $http.get '/secure'
-        .success (data) ->
-            port = data.port
-            HTTPS_API = 'https://' + location.hostname + if port == 443 then '' else ':' + port
-        .error (data) ->
-            throw data
+
+        # Set ability to disconnect before expiration
+        $rootScope.disconnectUser = ->
+            $timeout.cancel $rootScope.timerExpiration
+            $token.removeToken()
+            $state.go 'start'
+            .then ->
+                $rootScope.$broadcast 'user:disconnected'
 
         # Bind some events...
         $rootScope.$on 'user:loggedin', (e, data) ->
@@ -186,18 +189,18 @@ App.run [
             parsed = $token.parseJwt token
             exp = parsed.exp * 1000
             if $token.isValid(token) and exp - Date.now() > 0
-                $http.get HTTPS_API + '/api/users/' + parsed.id
+                $rootScope.user = $http.get HTTPS_API + '/api/users/' + parsed.id
                 .success (user) ->
                     $rootScope.$broadcast 'user:loggedin', user: user, exp: exp
                 .error ->
                     console.log 'invalid user ?'
             else $token.removeToken
 
-        # Check for secured states
+        # Check for secured states on state change
         $rootScope.$on '$stateChangeStart', (e, toState, toParams, fromState, fromParams) ->
             if !$rootScope.user and toState.secured
                 e.preventDefault()
-                if fromState.name
+                if !fromState.name
                     console.log 'redirecting...'
                     return $state.go 'start'
 ]
