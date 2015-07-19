@@ -40,10 +40,10 @@ routes =
                     if err.name == 'CastError' then return req.notFound()
                     else return req.internalError()
                 if where._id
-                    if users.length > 0 then users = users[0]
+                    if users.length > 0 then return res.json req.formatUser users[0]
                     else return req.notFound()
 
-                res.json users
+                res.json (req.formatUser user for user in users)
     ,
         type: 'post'
         fn: (req, res) ->
@@ -55,6 +55,7 @@ routes =
             user =
                 username: req.body.username
                 password: req.body.password
+                email: req.body.email
 
             User.findOne username: user.username, (err, resUser) ->
                 if err then return req.internalError 'Database error'

@@ -11,7 +11,7 @@
             input.form-control(type="email" ng-model="email" name="email" required)
             div(ng-show='registerForm.email.$touched')
                 label(ng-show='registerForm.email.$error.required') Email is required
-                label(ng-show='registerForm.email.$error.email') Bad email
+                label(ng-show='registerForm.email.$error.email') Invalid email
         .form-group
             label Password:
             input.form-control(type="password" ng-model="password" name="password" required minlength="{{passwordLength = 5}}")

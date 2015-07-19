@@ -6,6 +6,10 @@ UserSchema = new mongoose.Schema
         type: String
         required: true
         unique: true
+    email:
+        type: String
+        required: true
+        unique: true
     password:
         type: String
         required: true
@@ -14,7 +18,7 @@ checkPasswordModification = (callback) ->
     user = this
     return callback unless user.isModified 'password'
 
-    bcrypt.genSalt 5, (err, salt) ->
+    bcrypt.genSalt 10, (err, salt) ->
         if err then return callback err
 
         bcrypt.hash user.password, salt, null, (err, hash) ->

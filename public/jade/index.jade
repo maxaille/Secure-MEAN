@@ -17,6 +17,8 @@ html(ng-app="MyApp")
                     ul.nav.navbar-nav
                         li
                             a(ui-sref='start') Start page
+                        li(ng-show='user')
+                            a(ui-sref='secret') Secret zone :D :D :D
                         //li.dropdown
                         //    a.dropdown-toggle(href='#', data-toggle='dropdown', role='button')
                         //        | Dropdown
@@ -34,11 +36,13 @@ html(ng-app="MyApp")
                         //        li.divider(role='separator')
                         //        li
                         //            a(href='#') One more separated link
-                    ul.nav.navbar-nav.navbar-right
+                    ul.nav.navbar-nav.navbar-right(ng-hide="user")
                         li
                             a(ui-sref='login') Login
                         li
                             a(ui-sref='register') Register
+                    .pull-right(ng-show="user") Connected as {{user.username}}
+                        a(ng-click="$broadcast('user:disconnected')") Disconnect
         ui-view
 
 // Lib
