@@ -25,11 +25,9 @@ mongoose.connection.once 'open', ->
     console.info 'DB Connected'
 
 # ******* CONFIGURATION *******
-app.set 'view engine', 'jade' # Used for errors display and generating the index (setting HTTPS port for HTTPS request to the API)
+app.set 'view engine', 'jade'
 
-logger.token 'encrypted', (req, res) ->
-    if req.connection.encrypted then ' HTTPS ' else ' '
-app.use logger ':method:encrypted:url :status :response-time ms :res[content-length]'
+app.use logger
 app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: false
 
@@ -52,8 +50,6 @@ app.use (req, res, next) ->
 app.use express.static path.join(__dirname, 'public/build')
 app.get '/', (req, res) ->
     res.renderStatic 'index',
-        HTTPS_ONLY: conf.httpsOnly
-        HTTPS_PORT: app.get 'HTTPS_port'
         APP_NAME: conf.appName
 
 # ******* AUTHENTICATION *******

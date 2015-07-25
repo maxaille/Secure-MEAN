@@ -1,10 +1,6 @@
 # Secure-MEAN
 Seed for onepage MEAN app using HTTPS and JWT for secured sessions. Use Coffee Script, Jade and Sass.
 
-Can run in HTTPS mode only, or in HTTP + HTTPS for heavy static applications. All requests to the API will go through HTTPS even if the user only see HTTP in the URL bar.
-
-The API is available via HTTP or HTTPS for third-party applications. 
-
 # Dev
 There is a watchers for the frontend for Coffee, Jade and Sass. You just need to run 
 
@@ -14,7 +10,9 @@ and it will compile your files on saving to the build directory. You don't event
 You can also compile manually using:
 
     grunt
-Only for editing the index you should restart the server. To avoid a request to get the current HTTPS port when running in HTTP mode, I write it in the index in global variables so the Angular application can take it and run all requests through HTTPS.
+Only for editing the index you should restart the server. It's served as a dynamic page to set some variables like the application name.
+
+TODO: watcher to restart server when index.jade is modified
 # Getting started
 Run
 

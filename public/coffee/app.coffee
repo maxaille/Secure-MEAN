@@ -1,8 +1,5 @@
 @App = angular.module window.APP_NAME, ['ui.router']
 API = location.origin
-if !window.HTTPS_API
-    HTTPS_API = 'https://' + location.hostname + if window.HTTPS_PORT == 443 then '' else ':' + HTTPS_PORT
-else HTTPS_API = window.HTTPS_API
 
 App.config [
     '$stateProvider'
@@ -44,11 +41,11 @@ App.factory 'authInterceptor', [
         request: (config) ->
             token = $token.getToken()
             # Request to an API subroute, add token in headers
-            if config.url.indexOf(HTTPS_API) == 0 and new URL(config.url).pathname.indexOf(new URL(API).pathname) == 0 and token
+            if config.url.indexOf(API) == 0 and new URL(config.url).pathname.indexOf(new URL(API).pathname) == 0 and token
                 config.headers.Authorization = 'Bearer ' + token
             return config;
         response: (res) ->
-            if res.config.url.indexOf(HTTPS_API) == 0 and typeof res.data.token != 'undefined'
+            if res.config.url.indexOf(API) == 0 and typeof res.data.token != 'undefined'
                 $token.saveToken res.data.token
             return res
 ]
@@ -105,7 +102,7 @@ App.controller 'loginCtrl', [
     '$timeout'
     ($rootScope, $scope, $http, $state, $stateParams, $timeout) ->
         sendLogin = (user) ->
-            $http.post HTTPS_API + '/login', user
+            $http.post API + '/login', user
             .success (data) ->
                 $rootScope.$broadcast 'user:loggedin', user: data.user, exp: data.exp*1000
 
@@ -133,7 +130,7 @@ App.controller 'registerCtrl', [
     ($rootScope, $scope, $http, $state) ->
         $scope.validate = ->
             if $scope.password != $scope.passwordRepeat then return
-            $http.post HTTPS_API + '/api/users', username: $scope.username, password: $scope.password, email: $scope.email
+            $http.post API + '/api/users', username: $scope.username, password: $scope.password, email: $scope.email
             .success (data) ->
                 $state.go 'login', user: username: $scope.username, password: $scope.password
                 console.log data
@@ -189,7 +186,7 @@ App.run [
             parsed = $token.parseJwt token
             exp = parsed.exp * 1000
             if $token.isValid(token) and exp - Date.now() > 0
-                $rootScope.user = $http.get HTTPS_API + '/api/users/' + parsed.id
+                $rootScope.user = $http.get API + '/api/users/' + parsed.id
                 .success (user) ->
                     $rootScope.$broadcast 'user:loggedin', user: user, exp: exp
                 .error ->
@@ -200,7 +197,5 @@ App.run [
         $rootScope.$on '$stateChangeStart', (e, toState, toParams, fromState, fromParams) ->
             if !$rootScope.user and toState.secured
                 e.preventDefault()
-                if !fromState.name
-                    console.log 'redirecting...'
-                    return $state.go 'start'
+                return $state.go 'login', oldState: toState
 ]
