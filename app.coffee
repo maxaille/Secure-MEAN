@@ -1,7 +1,6 @@
 fs = require 'fs'
 console = require 'better-console'
 express = require 'express'
-require 'express-template-cache' # Use cache for generating the index only once
 path = require 'path'
 favicon = require 'serve-favicon'
 logger = require 'morgan'
@@ -27,7 +26,6 @@ mongoose.connection.once 'open', ->
 # ******* CONFIGURATION *******
 app.set 'view engine', 'jade'
 
-app.use logger
 app.use bodyParser.json()
 app.use bodyParser.urlencoded extended: false
 
@@ -48,9 +46,6 @@ app.use (req, res, next) ->
 
 # ********** STATIC  **********
 app.use express.static path.join(__dirname, 'public/build')
-app.get '/', (req, res) ->
-    res.renderStatic 'index',
-        APP_NAME: conf.appName
 
 # ******* AUTHENTICATION *******
 app = require('./utils/authentication')(app)

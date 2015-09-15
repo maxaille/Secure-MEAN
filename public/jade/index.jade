@@ -1,11 +1,9 @@
 doctype html
-html(ng-app="#{APP_NAME}")
+html(ng-app="Secure-MEAN")
     head
-        title(ng-bind="'#{APP_NAME} - ' + $state.current.title") #{APP_NAME} -
+        title(ng-bind="'Secure-MEAN - ' + $state.current.title") Secure-MEAN -
         link(rel='stylesheet', href='/plugins/bootstrap/dist/css/bootstrap.css')
         link(rel='stylesheet', href='/css/style.min.css')
-        script
-            | window.APP_NAME = '#{APP_NAME}';
     body
         nav.navbar.navbar-default.navbar-fixed-top
             .container-fluid
@@ -14,7 +12,7 @@ html(ng-app="#{APP_NAME}")
                         span.icon-bar
                         span.icon-bar
                         span.icon-bar
-                    a.navbar-brand(ui-sref='start') #{APP_NAME}
+                    a.navbar-brand(ui-sref='start') Secure-MEAN
                 #navbar.collapse.navbar-collapse
                     ul.nav.navbar-nav
                         li

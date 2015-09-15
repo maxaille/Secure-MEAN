@@ -1,4 +1,4 @@
-@App = angular.module window.APP_NAME, ['ui.router']
+@App = angular.module 'Secure-MEAN', ['ui.router']
 API = location.origin
 
 App.config [
