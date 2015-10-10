@@ -3,7 +3,8 @@
   "description": "Seed for onepage MEAN app using HTTPS and JWT for secured sessions",
   "version": "0.1.0",
   "scripts": {
-    "start": "coffee ./server.coffee"
+    "start": "coffee ./server.coffee",
+    "install": "gulp;bower install"
   },
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
