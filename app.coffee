@@ -47,6 +47,9 @@ app.use (req, res, next) ->
 
 # ********** STATIC  **********
 app.use express.static path.join(__dirname, 'public/build')
+app.get '/', (req, res) ->
+    res.renderStatic 'index',
+        APP_NAME: conf.appName
 
 # ******* AUTHENTICATION *******
 app = require('./utils/authentication')(app)
@@ -64,15 +67,15 @@ app.use (req, res, next) ->
         req.user.isValid = (cb) ->
             if req.user.exp * 1000 >= Date.now()
                 User.findOne id: req.user.id, (err, user) ->
-                    if err then cb err
-                    else cb null
+                    if err then cb err, null
+                    else cb null, user
             else
                 cb expired: true
     next()
 
 app.checkJWT = (req, res, next) ->
     if req.user
-        req.user.isValid (err) -> if err then res.status(401).send() else next()
+        req.user.isValid (err, user) -> if err then res.status(401).send() else next()
     else
         res.status(401).send()
 

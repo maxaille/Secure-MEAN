@@ -2,22 +2,21 @@
 Seed for onepage MEAN app using HTTPS and JWT for secured sessions. Use Coffee Script, Jade and Sass.
 
 # Dev
-There is a watchers for the frontend for Coffee, Jade and Sass. You just need to run 
+There is a watcher for the frontend for Coffee, Jade and Sass. You just need to run 
 
-    npm install -g grunt
-    grunt watch
-and it will compile your files on saving to the build directory. You don't event need to reload the server.
+    npm install -g gulp
+    gulp watch
+and it will compile your files to the build/ directory when saving any of them. You don't event need to reload the server.
 You can also compile manually using:
 
-    grunt
+    gulp
 Only for editing the index you should restart the server. It's served as a dynamic page to set some variables like the application name.
 
-TODO: watcher to restart server when index.jade is modified
 # Getting started
 Run
 
     npm install
-to downloads server's dependencies and
+to download servers dependencies and
 
     npm install -g bower
 for installing globally the tool for front-end dependencies.
@@ -35,10 +34,10 @@ or on Archlinux
 # Run the app
 You need coffeeScript to run the application, so do:
 
-npm install -g coffee-script
+    npm install -g coffee-script
 then to run the application:
 
-    coffee ./bin/www
+    npm start
 You can set PORT and HTTPS_PORT in the environment to change the port or in the config file (default is 3000 and 3001)
 You can also set user, password, url and database for MongoDB in the environment or in the config file. Default values are: 
 
