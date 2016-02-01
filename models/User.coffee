@@ -16,7 +16,7 @@ UserSchema = new mongoose.Schema
 
 checkPasswordModification = (callback) ->
     user = this
-    return callback unless user.isModified 'password'
+    return callback() unless user.isModified 'password'
 
     bcrypt.genSalt 10, (err, salt) ->
         if err then return callback err
